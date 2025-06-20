@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const attendanceCtrl = require('../controllers/attendanceController');
-const { authMiddleware } = require('../middlewares/auth');
-const roleMiddleware = require('../middlewares/roleMiddleware');
+const attendanceController = require('../controllers/attendanceController');
+const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
 
-router.post('/', authMiddleware, roleMiddleware(['teacher']), attendanceCtrl.markAttendance);
-router.get('/', authMiddleware, roleMiddleware(['admin', 'teacher']), attendanceCtrl.getAttendance);
+router.use(authMiddleware);
+
+// Маршрут для отметки посещения
+router.post('/schedule/:scheduleId/slot/:slotIndex', attendanceController.markAttendance);
+
+// Получение отчета по фильтрам
+router.get('/report', attendanceController.getAttendanceReport);
 
 module.exports = router;

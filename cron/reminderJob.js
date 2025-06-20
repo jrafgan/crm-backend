@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Student = require('../models/Student');
 const sendReminder = require('../utils/sendReminder');
+const ReminderTemplate = require('../models/Reminder');
 
 cron.schedule('0 10 * * *', async () => {
     console.log('⏰ Запуск cron-задачи на отправку напоминаний...');
@@ -13,9 +14,12 @@ cron.schedule('0 10 * * *', async () => {
         paymentUploaded: false
     });
 
+    const template = await ReminderTemplate.findOne({ key: 'payment_reminder' });
+    const defaultMsg = `Здравствуйте, {{name}}! Пожалуйста, оплатите обучение.`;
+
     for (const student of students) {
         if (student.phone) {
-            const msg = `Здравствуйте, ${student.name || 'студент'}! Пожалуйста, оплатите обучение.`;
+            const msg = (template?.message || defaultMsg).replace('{{name}}', student.fullName || 'студент');
             await sendReminder(student.phone, msg);
         }
     }

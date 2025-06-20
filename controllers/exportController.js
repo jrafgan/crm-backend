@@ -1,73 +1,148 @@
+const ExcelJS = require('exceljs');
 const Student = require('../models/Student');
-const User = require('../models/User');
-const { createObjectCsvWriter } = require('csv-writer');
-const { exportToExcel } = require('../utils/excelExport');
-const path = require('path');
-const fs = require('fs');
+const User = require('../models/userModel');
 
-const exportToCsv = async (res, data, headers, filename) => {
-    const filePath = path.join(__dirname, `../exports/${filename}`);
-    const writer = createObjectCsvWriter({
-        path: filePath,
-        header: headers,
-    });
+const sendExcelFile = async (res, rows, columns, filename = 'export.xlsx') => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Данные');
 
-    await writer.writeRecords(data);
-    res.download(filePath, filename, () => fs.unlinkSync(filePath));
+    worksheet.columns = columns;
+    worksheet.addRows(rows);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+    await workbook.xlsx.write(res);
+    res.end();
 };
 
+// ✅ Экспорт учеников
 exports.exportStudents = async (req, res) => {
     try {
-        const { status, paymentStatus, from, to, teacherId } = req.query;
+        const {
+            packageType,
+            learningStatus,
+            paymentStatus,
+            teacherId,
+            periodStart,
+            periodEnd
+        } = req.query;
 
         const filter = {};
-        if (status) filter.status = status;
-        if (paymentStatus) filter.paymentStatus = paymentStatus;
-        if (teacherId) filter.teacherId = teacherId;
 
-        if (from || to) {
+        if (packageType)     filter.packageType     = packageType;
+        if (learningStatus)  filter.learningStatus  = learningStatus;
+        if (paymentStatus)   filter.paymentStatus   = paymentStatus;
+        if (teacherId)       filter.teacherId       = teacherId;
+
+        if (periodStart || periodEnd) {
             filter.createdAt = {};
-            if (from) filter.createdAt.$gte = new Date(from);
-            if (to) filter.createdAt.$lte = new Date(to);
+            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
+            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
         }
 
-        const students = await Student.find(filter)
-            .populate('teacherId', 'fullName phone')
-            .lean();
+        const students = await Student.find(filter).populate('teacherId', 'fullName');
 
-        const excelBuffer = await exportToExcel(students, 'students_export');
+        const rows = students.map(s => ({
+            "ФИО": s.fullName,
+            "Телефон": s.phone,
+            "Группа": s.group,
+            "Уровень": s.level,
+            "Пакет": s.packageType,
+            "Статус обучения": s.learningStatus,
+            "Оплата": s.paymentStatus,
+            "Преподаватель": s.teacherId ? s.teacherId.fullName : '—',
+            "Дата": s.createdAt.toISOString().split('T')[0]
+        }));
 
-        res.setHeader('Content-Disposition', 'attachment; filename=students.xlsx');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.send(excelBuffer);
+        const columns = [
+            { header: 'ФИО', key: 'ФИО', width: 30 },
+            { header: 'Телефон', key: 'Телефон', width: 15 },
+            { header: 'Группа', key: 'Группа', width: 15 },
+            { header: 'Уровень', key: 'Уровень', width: 15 },
+            { header: 'Пакет', key: 'Пакет', width: 20 },
+            { header: 'Статус обучения', key: 'Статус обучения', width: 20 },
+            { header: 'Оплата', key: 'Оплата', width: 20 },
+            { header: 'Преподаватель', key: 'Преподаватель', width: 25 },
+            { header: 'Дата регистрации', key: 'Дата', width: 15 }
+        ];
+        await sendExcelFile(res, rows, columns, 'students.xlsx');
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка экспорта студентов' });
+        res.status(500).json({ error: 'Ошибка экспорта учеников', details: err.message });
     }
 };
 
-exports.exportUsers = async (req, res) => {
-    try {
-        const { role, from, to } = req.query;
 
-        const filter = {};
-        if (role) filter.role = role;
-        if (from || to) {
+// ✅ Экспорт учителей
+exports.exportTeachers = async (req, res) => {
+    try {
+        const { periodStart, periodEnd, isActive } = req.query;
+
+        const filter = { role: 'teacher' };
+        if (isActive !== undefined) filter.isActive = isActive === 'true';
+
+        if (periodStart || periodEnd) {
             filter.createdAt = {};
-            if (from) filter.createdAt.$gte = new Date(from);
-            if (to) filter.createdAt.$lte = new Date(to);
+            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
+            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
         }
 
-        const users = await User.find(filter).lean();
+        const teachers = await User.find(filter);
 
-        const excelBuffer = await exportToExcel(users, `users_${role || 'all'}`);
+        const rows = teachers.map(t => ({
+            "ФИО": t.fullName,
+            "Телефон": t.phone,
+            "Активность": t.isActive ? '✅ Активен' : '⛔ Неактивен',
+            "Дата": t.createdAt.toISOString().split('T')[0]
+        }));
 
-        res.setHeader('Content-Disposition', 'attachment; filename=users.xlsx');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.send(excelBuffer);
+        const columns = [
+            { header: 'ФИО', key: 'ФИО', width: 30 },
+            { header: 'Телефон', key: 'Телефон', width: 15 },
+            { header: 'Активность', key: 'Активность', width: 15 },
+            { header: 'Дата регистрации', key: 'Дата', width: 20 }
+        ];
+
+        await sendExcelFile(res, rows, columns, 'teachers.xlsx');
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка экспорта пользователей' });
+        res.status(500).json({ error: 'Ошибка экспорта учителей', details: err.message });
+    }
+};
+
+
+// ✅ Экспорт админов
+exports.exportAdmins = async (req, res) => {
+    try {
+        const { periodStart, periodEnd, isActive } = req.query;
+
+        const filter = { role: 'admin' };
+        if (isActive !== undefined) filter.isActive = isActive === 'true';
+
+        if (periodStart || periodEnd) {
+            filter.createdAt = {};
+            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
+            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
+        }
+
+        const admins = await User.find(filter);
+
+        const rows = admins.map(a => ({
+            "ФИО": a.fullName,
+            "Телефон": a.phone,
+            "Активность": a.isActive ? '✅ Активен' : '⛔ Неактивен',
+            "Дата": a.createdAt.toISOString().split('T')[0]
+        }));
+
+        const columns = [
+            { header: 'ФИО', key: 'ФИО', width: 30 },
+            { header: 'Телефон', key: 'Телефон', width: 15 },
+            { header: 'Активность', key: 'Активность', width: 15 },
+            { header: 'Дата регистрации', key: 'Дата', width: 20 }
+        ];
+
+        await sendExcelFile(res, rows, columns, 'admins.xlsx');
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка экспорта админов', details: err.message });
     }
 };
 

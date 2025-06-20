@@ -14,6 +14,22 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
+exports.getUsers = async (req, res) => {
+    try {
+        const { role, isActive } = req.query;
+
+        const filter = {};
+        if (role)     filter.role = role;
+        if (isActive !== undefined) filter.isActive = isActive === 'true';
+
+        const users = await User.find(filter);
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
 exports.createUser = async (req, res) => {
     try {
         const { fullName, phone, password, role } = req.body;
@@ -32,3 +48,58 @@ exports.createUser = async (req, res) => {
         res.status(500).json({ message: 'Не удалось создать пользователя' });
     }
 };
+
+const User = require('../models/User');
+
+// ✅ Создание админа
+exports.createAdmin = async (req, res) => {
+    try {
+        const data = { ...req.body, role: 'admin' };
+        const user = await User.create(data);
+        res.status(201).json(user);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+// ✅ Получение всех админов с фильтрами
+exports.getAdmins = async (req, res) => {
+    try {
+        const { periodStart, periodEnd } = req.query;
+        const filter = { role: 'admin' };
+
+        if (periodStart || periodEnd) {
+            filter.createdAt = {};
+            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
+            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
+        }
+
+        const admins = await User.find(filter);
+        res.json(admins);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ✅ Обновление админа
+exports.updateAdmin = async (req, res) => {
+    try {
+        const admin = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!admin) return res.status(404).json({ message: 'Админ не найден' });
+        res.json(admin);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+// ✅ Удаление админа
+exports.deleteAdmin = async (req, res) => {
+    try {
+        const admin = await User.findByIdAndDelete(req.params.id);
+        if (!admin) return res.status(404).json({ message: 'Админ не найден' });
+        res.json({ message: 'Админ удалён' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+

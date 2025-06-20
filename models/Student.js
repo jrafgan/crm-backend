@@ -1,17 +1,18 @@
-const mongoose = require('mongoose');
-
-const studentSchema = new mongoose.Schema({
-    name: String,
+const studentSchema = new Schema({
+    fullName: String,
     phone: String,
     group: String,
-    level: {
+    level: String,
+    packageType: {
         type: String,
-        enum: ['Beginner', 'Elementary', 'Pre-Intermediate', 'Intermediate', 'Upper-Intermediate', 'Advanced']
+        enum: ['индивидуальный', 'углубленный', 'базовый', 'курс менеджера', 'экспресс']
     },
-    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    startDate: Date,
-    status: { type: String, default: 'Активен' }, // например: Активен, Пауза, Удален
-    paymentStatus: { type: String, enum: ['Оплачено', 'Не оплачено'], default: 'Не оплачено' }
-}, { timestamps: true }); // createdAt включён
-
-module.exports = mongoose.model('Student', studentSchema);
+    paymentStatus: {
+        type: String,
+        enum: ['не оплатил', 'частично', 'полностью'],
+        default: 'не оплатил'
+    },
+    paymentReceipts: [String], // массив путей к чекам
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    teacherId: { type: Schema.Types.ObjectId, ref: 'User' }
+}, { timestamps: true });

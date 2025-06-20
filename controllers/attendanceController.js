@@ -1,41 +1,59 @@
-const Attendance = require('../models/Attendance');
+// 📁 controllers/attendanceController.js
 
+const Attendance = require('../models/Attendance');
+const Student = require('../models/Student');
+const User = require('../models/User');
+
+// ✅ Добавление/обновление посещаемости по слоту
 exports.markAttendance = async (req, res) => {
     try {
-        const { studentId, date, status, note } = req.body;
-        const teacherId = req.user.id;
+        const { scheduleId, slotIndex } = req.params;
+        const { studentId, date, status, comment } = req.body;
 
-        const record = await Attendance.findOneAndUpdate(
-            { studentId, date },
-            { studentId, teacherId, date, status, note },
+        if (!studentId || !date || !status) {
+            return res.status(400).json({ error: 'studentId, date и status обязательны' });
+        }
+
+        const attendance = await Attendance.findOneAndUpdate(
+            { student: studentId, date: new Date(date) },
+            {
+                student: studentId,
+                teacher: req.user.id,
+                date: new Date(date),
+                status,
+                comment
+            },
             { upsert: true, new: true }
         );
 
-        res.status(200).json(record);
+        res.json({ message: 'Посещение сохранено', attendance });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(500).json({ error: 'Ошибка отметки посещения', details: err.message });
     }
 };
 
-exports.getAttendance = async (req, res) => {
+// ✅ Получение отчета по посещаемости
+exports.getAttendanceReport = async (req, res) => {
     try {
-        const { studentId, teacherId, from, to } = req.query;
-        const filter = {};
+        const { studentId, teacherId, dateStart, dateEnd, status } = req.query;
 
-        if (studentId) filter.studentId = studentId;
-        if (teacherId) filter.teacherId = teacherId;
-        if (from || to) {
+        const filter = {};
+        if (studentId) filter.student = studentId;
+        if (teacherId) filter.teacher = teacherId;
+        if (status) filter.status = status;
+
+        if (dateStart || dateEnd) {
             filter.date = {};
-            if (from) filter.date.$gte = new Date(from);
-            if (to) filter.date.$lte = new Date(to);
+            if (dateStart) filter.date.$gte = new Date(dateStart);
+            if (dateEnd) filter.date.$lte = new Date(dateEnd);
         }
 
         const records = await Attendance.find(filter)
-            .populate('studentId', 'name group')
-            .populate('teacherId', 'fullName');
+            .populate('student', 'fullName packageType')
+            .populate('teacher', 'fullName');
 
         res.json(records);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Ошибка получения отчета', details: err.message });
     }
 };

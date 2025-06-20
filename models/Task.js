@@ -8,6 +8,8 @@ const taskSchema = new Schema({
     status:      { type: String, enum: ['Назначено','Выполнено'], default: 'Назначено' },
     completed:   { type: Boolean, default: false },
     assignedTo:  { type: Schema.Types.ObjectId, ref: 'User' },
+    toAllTeachers: { type: Boolean, default: false },
+    createdBy:   { type: Schema.Types.ObjectId, ref: 'User', required: true }, // ← добавлено
     clientPhone: { type: String }
 }, {
     timestamps: true

@@ -6,6 +6,7 @@ const userSchema = new Schema({
     phone:     { type: String, required: true, unique: true },
     password:  { type: String, required: true },
     role:      { type: String, enum: ['admin','teacher','student'], default: 'student' },
+    isActive: { type: Boolean, default: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' }
 }, {
     timestamps: true
