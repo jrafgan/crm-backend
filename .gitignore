@@ -5,3 +5,8 @@ node_modules/
 *.log
 uploads/*
 !uploads/.gitkeep
+# Конфигурационные примеры
+.env.example
+
+# Папка с загруженными квитанциями
+uploads/receipts/
