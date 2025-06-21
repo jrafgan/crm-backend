@@ -1,0 +1,258 @@
+openapi: 3.0.0
+info:
+  title: CRM Backend API
+  version: 1.0.0
+  description: API для управления студентами, задачами, оплатами и сообщениями
+servers:
+  - url: http://localhost:5000
+paths:
+  /auth/login:
+    post:
+      summary: Вход пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200': { description: Успешный вход }
+        '401': { description: Неверные данные }
+
+  /admins:
+    get:
+      summary: Получить всех админов
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Создать нового админа
+      responses:
+        '201': { description: Админ создан }
+  /admins/{id}:
+    get:
+      summary: Получить админа по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Обновить админа
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Обновлено }
+    delete:
+      summary: Удалить админа
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Удалено }
+
+  /students:
+    get:
+      summary: Получить всех студентов
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Создать студента
+      responses:
+        '201': { description: Студент создан }
+  /students/{id}:
+    get:
+      summary: Получить студента по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Обновить студента
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Обновлено }
+    delete:
+      summary: Удалить студента
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Удалено }
+
+  /payments:
+    get:
+      summary: Получить все оплаты
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Добавить оплату
+      responses:
+        '201': { description: Оплата добавлена }
+  /payments/{id}:
+    get:
+      summary: Получить оплату по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Обновить оплату
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Обновлено }
+    delete:
+      summary: Удалить оплату
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Удалено }
+
+  /schedule:
+    get:
+      summary: Получить расписание
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Создать расписание
+      responses:
+        '201': { description: Расписание создано }
+  /schedule/all:
+    get:
+      summary: Получить все расписания
+      responses:
+        '200': { description: OK }
+  /schedule/{id}:
+    get:
+      summary: Получить расписание по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Обновить расписание
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Обновлено }
+    delete:
+      summary: Удалить расписание
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Удалено }
+  /schedule/{id}/copy:
+    post:
+      summary: Копировать расписание на следующую неделю
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '201': { description: Расписание скопировано }
+
+  /attendance:
+    get:
+      summary: Получить посещаемость
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Отметить посещаемость
+      responses:
+        '201': { description: Посещаемость добавлена }
+  /attendance/{id}:
+    get:
+      summary: Получить запись посещения
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Обновить посещение
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Обновлено }
+    delete:
+      summary: Удалить посещение
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Удалено }
+
+  /whatsapp/send:
+    post:
+      summary: Отправить сообщение WhatsApp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200': { description: Отправлено }
+
+  /export/students:
+    get:
+      summary: Экспорт студентов в Excel
+      responses:
+        '200': { description: OK }
+  /export/payments:
+    get:
+      summary: Экспорт оплат в Excel
+      responses:
+        '200': { description: OK }

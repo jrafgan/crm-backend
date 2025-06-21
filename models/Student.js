@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
 const studentSchema = new Schema({
     fullName: String,
     phone: String,
@@ -16,3 +19,5 @@ const studentSchema = new Schema({
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     teacherId: { type: Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
+
+module.exports = mongoose.model('Student', studentSchema);

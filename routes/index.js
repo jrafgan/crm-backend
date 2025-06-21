@@ -1,4 +1,4 @@
-const authRoutes = require('../middlewares/auth');
+const authRoutes = require('./auth');
 const userRoutes = require('./users');
 const adminRoutes = require('./admins');
 const studentRoutes = require('./students');
@@ -12,8 +12,8 @@ const whatsappLogsRoutes = require('./whatsappLogs');
 const exportRoutes = require('./export');
 const attendanceRoutes = require('./attendance');
 
-
 module.exports = (app) => {
+
     app.use('/auth', authRoutes);
     app.use('/admins', adminRoutes);
     app.use('/users', userRoutes);

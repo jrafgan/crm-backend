@@ -1,19 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-exports.getAllUsers = async (req, res) => {
-    try {
-        const { role } = req.query;
-        const filter = role ? { role } : {};
-        const users = await User.find(filter)
-            .select('-password')
-            .sort({ createdAt: -1 });
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ message: 'Не удалось получить пользователей' });
-    }
-};
-
 exports.getUsers = async (req, res) => {
     try {
         const { role, isActive } = req.query;
@@ -49,57 +36,45 @@ exports.createUser = async (req, res) => {
     }
 };
 
-const User = require('../models/User');
 
-// ✅ Создание админа
-exports.createAdmin = async (req, res) => {
+exports.getAllUsers = async (req, res) => {
     try {
-        const data = { ...req.body, role: 'admin' };
-        const user = await User.create(data);
-        res.status(201).json(user);
+        const { role } = req.query;
+        const filter = role ? { role } : {};
+        const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
+        res.json(users);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(500).json({ message: 'Не удалось получить пользователей' });
     }
 };
 
-// ✅ Получение всех админов с фильтрами
-exports.getAdmins = async (req, res) => {
+exports.getUserById = async (req, res) => {
     try {
-        const { periodStart, periodEnd } = req.query;
-        const filter = { role: 'admin' };
-
-        if (periodStart || periodEnd) {
-            filter.createdAt = {};
-            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
-            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
-        }
-
-        const admins = await User.find(filter);
-        res.json(admins);
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+        res.json(user);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: 'Ошибка при получении пользователя' });
     }
 };
 
-// ✅ Обновление админа
-exports.updateAdmin = async (req, res) => {
+exports.updateUser = async (req, res) => {
     try {
-        const admin = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!admin) return res.status(404).json({ message: 'Админ не найден' });
-        res.json(admin);
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password');
+        if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+        res.json(user);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ message: 'Ошибка при обновлении пользователя' });
     }
 };
 
-// ✅ Удаление админа
-exports.deleteAdmin = async (req, res) => {
+exports.deleteUser = async (req, res) => {
     try {
-        const admin = await User.findByIdAndDelete(req.params.id);
-        if (!admin) return res.status(404).json({ message: 'Админ не найден' });
-        res.json({ message: 'Админ удалён' });
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+        res.json({ message: 'Пользователь удалён' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: 'Ошибка при удалении пользователя' });
     }
 };
 

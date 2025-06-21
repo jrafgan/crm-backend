@@ -1,6 +1,6 @@
 const ExcelJS = require('exceljs');
 const Student = require('../models/Student');
-const User = require('../models/userModel');
+const User = require('../models/User');
 
 const sendExcelFile = async (res, rows, columns, filename = 'export.xlsx') => {
     const workbook = new ExcelJS.Workbook();

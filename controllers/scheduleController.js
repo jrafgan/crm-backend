@@ -1,6 +1,4 @@
 const Schedule = require('../models/Schedule');
-const Student = require('../models/Student');
-
 // ✅ Создание расписания
 exports.createSchedule = async (req, res) => {
     try {
@@ -85,6 +83,42 @@ exports.updateSchedule = async (req, res) => {
     }
 };
 
+
+exports.copyScheduleToNextWeek = async (req, res) => {
+    try {
+        const sourceSchedule = await Schedule.findById(req.params.id);
+        if (!sourceSchedule) {
+            return res.status(404).json({ error: 'Расписание не найдено' });
+        }
+
+        // Вычисляем следующую неделю
+        const newWeekStart = new Date(sourceSchedule.weekStart);
+        newWeekStart.setDate(newWeekStart.getDate() + 7);
+
+        // Проверяем, не существует ли уже расписание на ту неделю
+        const existing = await Schedule.findOne({
+            teacherId: sourceSchedule.teacherId,
+            weekStart: newWeekStart
+        });
+        if (existing) {
+            return res.status(400).json({ error: 'Расписание на следующую неделю уже существует' });
+        }
+
+        // Копируем слоты
+        const newSchedule = new Schedule({
+            teacherId: sourceSchedule.teacherId,
+            weekStart: newWeekStart,
+            slots: sourceSchedule.slots.map(slot => ({ ...slot.toObject() })) // глубокая копия
+        });
+
+        await newSchedule.save();
+
+        res.status(201).json({ message: 'Расписание скопировано', schedule: newSchedule });
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка при копировании расписания', details: err.message });
+    }
+};
+
 // ✅ Удаление расписания
 exports.deleteSchedule = async (req, res) => {
     try {
@@ -134,6 +168,24 @@ exports.addSlot = async (req, res) => {
     }
 };
 
+exports.addSlotToSchedule = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const newSlot = req.body;
+
+        const schedule = await Schedule.findById(id);
+        if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
+
+        schedule.slots.push(newSlot);
+        await schedule.save();
+
+        res.json({ message: 'Слот добавлен', schedule });
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка при добавлении слота', details: err.message });
+    }
+};
+
+
 
 // 🗑️ Удалить слот по индексу
 exports.deleteSlot = async (req, res) => {
@@ -154,38 +206,24 @@ exports.deleteSlot = async (req, res) => {
     }
 };
 
-exports.copyScheduleToNextWeek = async (req, res) => {
+// 🎯 Назначение ученика в слот по индексу
+exports.assignStudentToSlot = async (req, res) => {
     try {
-        const sourceSchedule = await Schedule.findById(req.params.id);
-        if (!sourceSchedule) {
-            return res.status(404).json({ error: 'Расписание не найдено' });
+        const { id, index } = req.params;
+        const { studentId } = req.body;
+
+        const schedule = await Schedule.findById(id);
+        if (!schedule || !schedule.slots[index]) {
+            return res.status(404).json({ error: 'Слот не найден' });
         }
 
-        // Вычисляем следующую неделю
-        const newWeekStart = new Date(sourceSchedule.weekStart);
-        newWeekStart.setDate(newWeekStart.getDate() + 7);
+        schedule.slots[index].studentId = studentId;
+        await schedule.save();
 
-        // Проверяем, не существует ли уже расписание на ту неделю
-        const existing = await Schedule.findOne({
-            teacherId: sourceSchedule.teacherId,
-            weekStart: newWeekStart
-        });
-        if (existing) {
-            return res.status(400).json({ error: 'Расписание на следующую неделю уже существует' });
-        }
-
-        // Копируем слоты
-        const newSchedule = new Schedule({
-            teacherId: sourceSchedule.teacherId,
-            weekStart: newWeekStart,
-            slots: sourceSchedule.slots.map(slot => ({ ...slot.toObject() })) // глубокая копия
-        });
-
-        await newSchedule.save();
-
-        res.status(201).json({ message: 'Расписание скопировано', schedule: newSchedule });
+        res.json({ message: 'Ученик назначен в слот', slot: schedule.slots[index] });
     } catch (err) {
-        res.status(500).json({ error: 'Ошибка при копировании расписания', details: err.message });
+        res.status(500).json({ error: 'Ошибка при назначении ученика', details: err.message });
     }
 };
+
 

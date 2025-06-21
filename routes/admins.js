@@ -7,6 +7,7 @@ router.use(authMiddleware, roleMiddleware(['admin']));
 
 router.post('/', userController.createAdmin);
 router.get('/', userController.getAdmins);
+router.get('/:id', userController.getAdminById);
 router.put('/:id', userController.updateAdmin);
 router.delete('/:id', userController.deleteAdmin);
 
