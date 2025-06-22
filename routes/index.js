@@ -1,6 +1,5 @@
 const authRoutes = require('./auth');
 const userRoutes = require('./users');
-const adminRoutes = require('./admins');
 const studentRoutes = require('./students');
 const paymentRoutes = require('./payments');
 const scheduleRoutes = require('./schedule');
@@ -15,7 +14,6 @@ const attendanceRoutes = require('./attendance');
 module.exports = (app) => {
 
     app.use('/auth', authRoutes);
-    app.use('/admins', adminRoutes);
     app.use('/users', userRoutes);
     app.use('/students', studentRoutes);
     app.use('/payments', paymentRoutes);

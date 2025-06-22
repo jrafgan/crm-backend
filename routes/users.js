@@ -6,7 +6,7 @@ const userController = require('../controllers/userController');
 router.use(authMiddleware, roleMiddleware(['admin']));
 
 router.post('/', userController.createUser); // Создание пользователя (ученика, учителя и т.д.)
-router.get('/', userController.getAllUsers); // Получение всех пользователей (по role)
+router.get('/all', userController.getAllUsers); // Получение всех пользователей (по role)
 router.get('/', userController.getUsers); // Получение пользователей по фильтру
 router.get('/:id', userController.getUserById); // Получение одного пользователя
 router.put('/:id', userController.updateUser); // Обновление пользователя
