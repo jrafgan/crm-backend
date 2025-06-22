@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `receipt_${req.params.id}_${Date.now()}${ext}`);
+        cb(null, `receipt_${req.params.studentId}_${Date.now()}${ext}`);
     }
 });
 
@@ -19,8 +19,10 @@ const fileFilter = (req, file, cb) => {
     cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
 };
 
-module.exports = multer({
+const upload = multer({
     storage,
     fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 }
-}).single('receipt');
+});
+
+module.exports = upload.array('files', 10); // экспортируешь массив файлов

@@ -25,7 +25,7 @@ const attendanceSchema = new Schema({
     lessonType: {
         type: String,
         enum: ['Индивидуальный', 'Базовый', 'Экспресс', 'Углубленный', 'Курс менеджера'],
-        default: 'Individual'
+        default: 'Базовый'
     },
     comment: {
         type: String,

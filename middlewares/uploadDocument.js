@@ -4,13 +4,14 @@ const path = require('path');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../uploads/payments');
+        const studentId = req.params.id;
+        const uploadPath = path.join(__dirname, `../uploads/documents/${studentId}`);
         if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname);
-        const uniqueName = `payment_${req.user.id}_${Date.now()}${ext}`;
+        const uniqueName = `document_${Date.now()}_${Math.round(Math.random() * 1E9)}${ext}`;
         cb(null, uniqueName);
     }
 });
@@ -23,9 +24,11 @@ const upload = multer({
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Неподдерживаемый тип файла'));
+            const err = new Error('Неподдерживаемый тип файла');
+            err.status = 415;
+            cb(err);
         }
     }
 });
 
-module.exports = upload.single('receipt');
+module.exports = upload.array('documents', 10);

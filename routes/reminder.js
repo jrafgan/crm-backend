@@ -7,6 +7,6 @@ router.use(authMiddleware);
 router.use(roleMiddleware(['admin']));
 
 router.get('/:key', controller.getReminderMessage);
-router.post('/update', controller.updateReminderMessage);
+router.patch('/update', controller.updateReminderMessage);
 
 module.exports = router;

@@ -10,10 +10,7 @@ router.get('/', studentController.getStudents);
 router.get('/:id', studentController.getStudentById);
 router.put('/:id', studentController.updateStudent);
 router.delete('/:id', studentController.deleteStudent);
-
-router.post('/:id/receipt', uploadReceipt, studentController.uploadReceipt);
-
-// Получить все чеки
-router.get('/:id/receipts', studentController.getReceipts);
+router.get('/filter/payment', studentController.getStudentsByPaymentStatus);
+router.get('/:id/with-receipt', studentController.getStudentWithReceipts); //возвращает всех учеников
 
 module.exports = router;

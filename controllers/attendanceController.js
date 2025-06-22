@@ -1,5 +1,3 @@
-// 📁 controllers/attendanceController.js
-
 const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
 const User = require('../models/User');

@@ -1,5 +1,5 @@
-// 📁 models/Document.js
 const mongoose = require('mongoose');
+const fs = require('fs');
 
 const documentSchema = new mongoose.Schema({
     student: {
@@ -7,10 +7,10 @@ const documentSchema = new mongoose.Schema({
         ref: 'Student',
         required: true
     },
-    fileUrl: {
+    fileUrls: [{
         type: String,
         required: true
-    },
+    }],
     uploadedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -22,4 +22,17 @@ const documentSchema = new mongoose.Schema({
     }
 });
 
+// Удаление файлов при удалении записи
+documentSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+    try {
+        this.fileUrls.forEach(filePath => {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+    } catch (err) {
+        console.error('Ошибка при удалении файлов документа:', err);
+    }
+    next();
+});
+
 module.exports = mongoose.model('Document', documentSchema);
+

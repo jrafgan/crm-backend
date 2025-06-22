@@ -73,7 +73,10 @@ exports.updateSchedule = async (req, res) => {
 
         const { weekStart, slots } = req.body;
 
-        if (weekStart) schedule.weekStart = new Date(weekStart);
+        if (weekStart) {
+            const parsedDate = new Date(weekStart);
+            if (!isNaN(parsedDate)) schedule.weekStart = parsedDate;
+        }
         if (slots && Array.isArray(slots)) schedule.slots = slots;
 
         await schedule.save();
@@ -108,7 +111,11 @@ exports.copyScheduleToNextWeek = async (req, res) => {
         const newSchedule = new Schedule({
             teacherId: sourceSchedule.teacherId,
             weekStart: newWeekStart,
-            slots: sourceSchedule.slots.map(slot => ({ ...slot.toObject() })) // глубокая копия
+            slots: sourceSchedule.slots.map(slot => {
+                const cleanSlot = { ...slot.toObject() };
+                delete cleanSlot._id; // избегаем конфликтов ObjectId
+                return cleanSlot;
+            }) // глубокая копия
         });
 
         await newSchedule.save();
@@ -125,7 +132,7 @@ exports.deleteSchedule = async (req, res) => {
         const schedule = await Schedule.findById(req.params.id);
         if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
 
-        await schedule.remove();
+        await Schedule.findByIdAndDelete(req.params.id);
         res.json({ message: 'Расписание удалено' });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка удаления расписания', details: err.message });
@@ -225,5 +232,4 @@ exports.assignStudentToSlot = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при назначении ученика', details: err.message });
     }
 };
-
 

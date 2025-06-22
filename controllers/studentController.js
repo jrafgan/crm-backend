@@ -7,10 +7,9 @@ exports.createStudent = async (req, res) => {
             fullName:  req.body.fullName,
             phone:     req.body.phone,
             group:     req.body.group,
-            level:     req.body.level,
             packageType: req.body.packageType,
-            learningStatus: req.body.learningStatus || 'обучается',
-            status:    req.body.status || 'active',
+            paymentStatus: req.body.paymentStatus,
+            learningStatus: req.body.learningStatus,
             hasPaid:   req.body.hasPaid || false,
             teacherId: req.user.role === 'teacher' ? req.user.id : req.body.teacherId,
             createdBy: req.user.id
@@ -26,34 +25,26 @@ exports.createStudent = async (req, res) => {
 exports.getStudents = async (req, res) => {
     try {
         const {
+            fullName,
+            phone,
             group,
-            status,
-            paid,
             teacherId,
-            periodStart,
-            periodEnd,
-            learningStatus,
             packageType,
+            learningStatus,
             paymentStatus
         } = req.query;
 
         const filter = {};
 
-        if (group)         filter.group         = group;
-        if (status)        filter.status        = status;
-        if (paid !== undefined) filter.hasPaid  = paid === 'true';
-        if (teacherId)     filter.teacherId     = teacherId;
+        if (group) filter.group = group;
+        if (teacherId) filter.teacherId = teacherId;
         if (learningStatus) filter.learningStatus = learningStatus;
-        if (packageType)   filter.packageType   = packageType;
+        if (packageType) filter.packageType = packageType;
         if (paymentStatus) filter.paymentStatus = paymentStatus;
+        if (fullName) filter.fullName = { $regex: fullName, $options: 'i' }; // Поиск по имени
+        if (phone) filter.phone = { $regex: phone, $options: 'i' };         // Поиск по телефону
 
-        if (periodStart || periodEnd) {
-            filter.createdAt = {};
-            if (periodStart) filter.createdAt.$gte = new Date(periodStart);
-            if (periodEnd)   filter.createdAt.$lte = new Date(periodEnd);
-        }
-
-        // Учитель видит только своих
+        // Если пользователь — преподаватель, он видит только своих учеников
         if (req.user.role === 'teacher') {
             filter.teacherId = req.user.id;
         }
@@ -113,39 +104,37 @@ exports.deleteStudent = async (req, res) => {
     }
 };
 
-exports.uploadReceipt = async (req, res) => {
+exports.getStudentsByPaymentStatus = async (req, res) => {
     try {
-        const student = await Student.findById(req.params.id);
+        const { paymentStatus } = req.query;
+
+        const filter = {};
+        if (paymentStatus) {
+            filter.paymentStatus = paymentStatus;
+        }
+
+        const students = await Student.find(filter)
+            .populate('teacherId', 'fullName')
+            .select('fullName phone group paymentStatus packageType');
+
+        res.json(students);
+    } catch (err) {
+        res.status(500).json({ message: 'Ошибка при фильтрации студентов', error: err.message });
+    }
+};
+
+exports.getStudentWithReceipts = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id)
+            .populate('teacherId', 'fullName')
+            .select('fullName phone group packageType paymentStatus paymentReceipts');
+
         if (!student) return res.status(404).json({ message: 'Ученик не найден' });
 
-        if (!req.file || !req.file.path)
-            return res.status(400).json({ message: 'Файл не загружен' });
-
-        // Добавляем путь к чеку в список чеков
-        if (!student.paymentReceipts) {
-            student.paymentReceipts = [];
-        }
-        student.paymentReceipts.push(req.file.path);
-
-        // ❗ НЕ меняем статус оплаты автоматически
-        await student.save();
-
-        res.json({ message: 'Чек успешно загружен', file: req.file.path });
+        res.json(student);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: 'Ошибка при получении ученика', error: err.message });
     }
 };
 
-
-exports.getReceipts = async (req, res) => {
-    try {
-        const student = await Student.findById(req.params.id);
-        if (!student || !student.paymentReceipts || !student.paymentReceipts.length)
-            return res.status(404).json({ message: 'Чеки не найдены' });
-
-        res.json({ receipts: student.paymentReceipts });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
 

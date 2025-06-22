@@ -19,20 +19,17 @@ const slotSchema = new Schema({
     },
     packageType: {
         type: String,
-        enum: ['базовый', 'индивидуальный', 'групповой', 'экспресс', 'глубокий']
+        enum: ['базовый', 'индивидуальный', 'курс менеджера', 'экспресс', 'углубленный']
     },
     studentIds: [{
         type: Schema.Types.ObjectId,
         ref: 'Student'
     }],
-    groupName: {
-        type: String
-    },
     isGroup: {
         type: Boolean,
         default: false
     },
-    groupLabel: {
+    groupName: {
         type: String,
         default: '' // Например: "База-1" или "Группа A"
     }

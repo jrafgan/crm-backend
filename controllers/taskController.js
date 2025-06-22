@@ -90,22 +90,23 @@ exports.deleteTask = async (req, res) => {
     }
 };
 
-exports.markComplete = async (req, res) => {
+exports.toggleCompleteStatus = async (req, res) => {
     try {
         const task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({ message: 'Задача не найдена' });
 
-        // Только назначенный учитель может отметить как выполненную
+        // Только назначенный учитель может менять статус
         if (req.user.role === 'teacher' && task.assignedTo.toString() !== req.user.id) {
             return res.status(403).json({ message: 'Доступ запрещён' });
         }
 
-        task.completed = true;
-        task.status = 'Выполнено';
+        // Переключение статуса
+        task.status = task.status === 'Выполнено' ? 'Не выполнено' : 'Выполнено';
         await task.save();
 
-        res.json({ message: 'Задача выполнена', task });
+        res.json({ message: `Статус изменён на: ${task.status}`, task });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 };
+

@@ -10,6 +10,6 @@ router.get('/', taskCtrl.getTasks);                                        // в
 router.get('/:id', taskCtrl.getTaskById);                                  // по id
 router.put('/:id', roleMiddleware(['admin']), taskCtrl.updateTask);        // обновить
 router.delete('/:id', roleMiddleware(['admin']), taskCtrl.deleteTask);     // удалить
-router.patch('/:id/complete', roleMiddleware(['teacher']), taskCtrl.markComplete); // завершить
+router.patch('/:id/complete', roleMiddleware(['teacher']), taskCtrl.toggleCompleteStatus); // завершить
 
 module.exports = router;

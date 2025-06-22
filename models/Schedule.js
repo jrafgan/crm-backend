@@ -14,10 +14,13 @@ const scheduleSchema = new Schema({
     },
     slots: {
         type: [slotSchema],
-        validate: [slots => slots.length > 0, 'Должен быть хотя бы один слот']
+        // validate: [slots => slots.length > 0, 'Должен быть хотя бы один слот'] — отключено для гибкости
+// Уберите комментарий, если нужна жёсткая валидация
+// validate: [slots => slots.length > 0, 'Должен быть хотя бы один слот']
     }
 }, {
     timestamps: true
 });
 
 module.exports = mongoose.model('Schedule', scheduleSchema);
+

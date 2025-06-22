@@ -1,15 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/documentController');
-const uploadReceipt = require('../middlewares/uploadDocument');
+const uploadDocument = require('../middlewares/uploadDocument');
 const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
 
+router.use(authMiddleware);
+
 router.post(
-    '/:id/receipt',
-    authMiddleware,
+    '/:id/upload',
     roleMiddleware(['admin', 'teacher']),
-    uploadReceipt,
-    ctrl.uploadReceipt
+    uploadDocument,
+    ctrl.uploadDocument
+);
+
+router.get(
+    '/:id/documents',
+    roleMiddleware(['admin', 'teacher']),
+    ctrl.getDocumentsByStudent
 );
 
 module.exports = router;
+

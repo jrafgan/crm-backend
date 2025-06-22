@@ -11,8 +11,7 @@ exports.sendMessage = async (req, res) => {
 
     try {
         await whatsappClient.sendMessage(phone, message);
-
-        await WhatsAppLog.create({ phone, message, status: 'sent', createdAt: new Date() });
+        await WhatsAppLog.create({ phone, message, status: 'sent' });
 
         res.json({ message: 'Сообщение отправлено' });
     } catch (err) {
@@ -30,22 +29,24 @@ exports.sendBulkMessages = async (req, res) => {
 
     try {
         const recipients = await filterRecipients(filters);
-        const results = [];
 
-        for (const recipient of recipients) {
+        const results = await Promise.all(recipients.map(async (recipient) => {
             const phone = recipient.phone;
-
             try {
                 await whatsappClient.sendMessage(phone, message);
                 await WhatsAppLog.create({ phone, message, status: 'sent' });
-                results.push({ phone, status: 'sent' });
+                return { phone, status: 'sent' };
             } catch (err) {
                 await WhatsAppLog.create({ phone, message, status: 'failed', error: err.message });
-                results.push({ phone, status: 'failed', error: err.message });
+                return { phone, status: 'failed', error: err.message };
             }
-        }
+        }));
 
-        res.json({ sent: results.length, success: results.filter(r => r.status === 'sent').length, details: results });
+        res.json({
+            sent: results.length,
+            success: results.filter(r => r.status === 'sent').length,
+            details: results
+        });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка фильтрации или отправки', details: err.message });
     }

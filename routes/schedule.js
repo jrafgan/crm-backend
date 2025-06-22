@@ -24,8 +24,7 @@ router.delete('/:id', roleMiddleware(['admin']), scheduleController.deleteSchedu
 // Слоты
 router.put('/:scheduleId/slot/:slotIndex', scheduleController.updateSlot);
 router.delete('/:scheduleId/slot/:slotIndex', scheduleController.deleteSlot);
-router.post('/:id/slot', scheduleController.addSlotToSchedule);
-router.post('/:id/slot', scheduleController.addSlot);
+router.post('/:id/slot', scheduleController.addSlot); // удалён дублирующий маршрут
 router.patch('/:id/slot/:index/assign-student', scheduleController.assignStudentToSlot);
 
 // Копировать расписание на следующую неделю
