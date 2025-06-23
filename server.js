@@ -6,9 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
-const {initWhatsApp, sendMessage} = require('./services/whatsappClient');
 const routes = require('./routes'); // routes должен экспортировать функцию (app) => {...}
-
+const qrcode = require('qrcode');
+const { initWhatsApp, sendMessage, getQR } = require('./services/whatsappClient');
 // Создание директорий
 ['uploads/receipts', 'uploads/payments', 'uploads/documents'].forEach(dir => {
     const full = path.join(__dirname, dir);
@@ -25,7 +25,20 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // отд�
 // Подключаем все маршруты
 routes(app);
 
-// WhatsApp клиент
+// QR-endpoint — возвращает картинку
+app.get('/qr', async (req, res) => {
+    const qrString = getQR();
+    if (!qrString) {
+        return res.send('QR ещё не сгенерирован, подожди пару секунд.');
+    }
+    // Генерируем Data URL с QR-кодом
+    try {
+        const dataUrl = await qrcode.toDataURL(qrString);
+        res.send(`<img src="${dataUrl}" alt="WhatsApp QR Code"/>`);
+    } catch (err) {
+        res.status(500).send('Не удалось сгенерировать QR-код');
+    }
+});
 
 
 // 404 fallback

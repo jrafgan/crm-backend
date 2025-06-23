@@ -1,6 +1,12 @@
-const makeWASocket = require('@whiskeysockets/baileys').default;
-const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
+
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    DisconnectReason,          // ← add this
+} = require('@whiskeysockets/baileys');
 const P = require('pino');
+const qrcode = require('qrcode');
+let latestQR = null;
 
 let client;
 
@@ -13,13 +19,18 @@ const initWhatsApp = async () => {
     });
 
     client.ev.on('connection.update', ({ connection, lastDisconnect , qr}) => {
+
         if (qr) {
-            console.log('📷 QR-код для авторизации:\n', qr);
+            latestQR = qr;
+            //qrcode.generate(qr, { small: true });
+            console.log('📷 QR-код для авторизации:\n');
         }
 
         if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401;
-            console.log('Connection closed. Reconnecting:', shouldReconnect);
+            const shouldReconnect = lastDisconnect.error?.output?.statusCode
+                !== DisconnectReason.loggedOut;
+            console.log('❌ WhatsApp отключен', lastDisconnect.error,
+                shouldReconnect ? '— переподключаемся' : '');
             if (shouldReconnect) initWhatsApp();
         } else if (connection === 'open') {
             console.log('✅ WhatsApp подключен');
@@ -49,6 +60,10 @@ const sendMessage = async (phone, message) => {
 
 module.exports = {
     initWhatsApp,
-    sendMessage,
-    getClient: () => client
+    sendMessage: async (phone, text) => {
+        await client.sendMessage(phone, { text });
+    },
+    getClient: () => client,   // остаётся как есть
+    getQR:      () => latestQR, // возвращает последнюю строку QR
+    client                        // сам объект сокета, если нужно обращаться напрямую
 };
