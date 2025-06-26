@@ -24,7 +24,7 @@ exports.createOrUploadPayment = async (req, res) => {
             method: method,
             paymentType,
             receiptUrl: receiptPaths,
-            createdBy: req.user._id
+            createdBy: req.user.id
         });
 
         await payment.save();
@@ -42,8 +42,7 @@ exports.createOrUploadPayment = async (req, res) => {
 exports.getPaymentsByStudent = async (req, res) => {
     try {
         const filter = {};
-        if (req.query.studentId) filter.studentId = req.query.studentId;
-
+        if (req.params.id) filter.studentId = req.params.id;
         const payments = await Payment.find(filter).populate('studentId', 'name');
         res.json(payments);
     } catch (err) {
@@ -58,14 +57,5 @@ exports.deletePayment = async (req, res) => {
         res.json({ message: 'Оплата удалена' });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка при удалении оплаты' });
-    }
-};
-
-// GET /payments/export (пока просто заглушка)
-exports.exportPayments = async (req, res) => {
-    try {
-        res.json({ message: 'Экспорт в Excel пока не реализован' });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка при экспорте' });
     }
 };

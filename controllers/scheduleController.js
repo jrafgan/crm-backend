@@ -1,48 +1,38 @@
 const Schedule = require('../models/Schedule');
-// ✅ Создание расписания
+
 exports.createSchedule = async (req, res) => {
     try {
         const { teacherId, weekStart, slots } = req.body;
-
-        if (!slots || !Array.isArray(slots) || slots.length === 0) {
-            return res.status(400).json({ error: 'Слоты обязательны' });
-        }
-
+        if (!slots?.length) return res.status(400).json({ error: 'Слоты обязательны' });
         const schedule = new Schedule({ teacherId, weekStart, slots });
         await schedule.save();
-
         res.status(201).json(schedule);
     } catch (err) {
         res.status(500).json({ error: 'Ошибка создания расписания', details: err.message });
     }
 };
 
-// ✅ Получение всех расписаний (без фильтра)
 exports.getAllSchedules = async (req, res) => {
     try {
         const schedules = await Schedule.find()
             .populate('teacherId', 'fullName')
-            .populate('slots.studentId', 'fullName packageType');
-
+            .populate('slots.studentIds', 'fullName packageType');
         res.json(schedules);
     } catch (err) {
         res.status(500).json({ error: 'Ошибка при получении всех расписаний', details: err.message });
     }
 };
 
-
-// ✅ Получение расписаний с фильтрами
 exports.getSchedules = async (req, res) => {
     try {
-        const filter = {};
         const { teacherId, weekStart } = req.query;
-
+        const filter = {};
         if (teacherId) filter.teacherId = teacherId;
         if (weekStart) filter.weekStart = new Date(weekStart);
 
         const schedules = await Schedule.find(filter)
             .populate('teacherId', 'fullName')
-            .populate('slots.studentId', 'fullName packageType');
+            .populate('slots.studentIds', 'fullName packageType');
 
         res.json(schedules);
     } catch (err) {
@@ -50,34 +40,27 @@ exports.getSchedules = async (req, res) => {
     }
 };
 
-// ✅ Получение одного расписания
 exports.getScheduleById = async (req, res) => {
     try {
         const schedule = await Schedule.findById(req.params.id)
             .populate('teacherId', 'fullName')
-            .populate('slots.studentId', 'fullName packageType');
+            .populate('slots.studentIds', 'fullName packageType');
 
         if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
-
         res.json(schedule);
     } catch (err) {
         res.status(500).json({ error: 'Ошибка получения расписания', details: err.message });
     }
 };
 
-// ✅ Обновление расписания
 exports.updateSchedule = async (req, res) => {
     try {
         const schedule = await Schedule.findById(req.params.id);
         if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
 
         const { weekStart, slots } = req.body;
-
-        if (weekStart) {
-            const parsedDate = new Date(weekStart);
-            if (!isNaN(parsedDate)) schedule.weekStart = parsedDate;
-        }
-        if (slots && Array.isArray(slots)) schedule.slots = slots;
+        if (weekStart && !isNaN(new Date(weekStart))) schedule.weekStart = new Date(weekStart);
+        if (Array.isArray(slots)) schedule.slots = slots;
 
         await schedule.save();
         res.json(schedule);
@@ -86,52 +69,38 @@ exports.updateSchedule = async (req, res) => {
     }
 };
 
-
 exports.copyScheduleToNextWeek = async (req, res) => {
     try {
         const sourceSchedule = await Schedule.findById(req.params.id);
-        if (!sourceSchedule) {
-            return res.status(404).json({ error: 'Расписание не найдено' });
-        }
+        if (!sourceSchedule) return res.status(404).json({ error: 'Расписание не найдено' });
 
-        // Вычисляем следующую неделю
         const newWeekStart = new Date(sourceSchedule.weekStart);
         newWeekStart.setDate(newWeekStart.getDate() + 7);
 
-        // Проверяем, не существует ли уже расписание на ту неделю
-        const existing = await Schedule.findOne({
-            teacherId: sourceSchedule.teacherId,
-            weekStart: newWeekStart
-        });
-        if (existing) {
-            return res.status(400).json({ error: 'Расписание на следующую неделю уже существует' });
-        }
+        const existing = await Schedule.findOne({ teacherId: sourceSchedule.teacherId, weekStart: newWeekStart });
+        if (existing) return res.status(400).json({ error: 'Расписание на следующую неделю уже существует' });
 
-        // Копируем слоты
         const newSchedule = new Schedule({
             teacherId: sourceSchedule.teacherId,
             weekStart: newWeekStart,
             slots: sourceSchedule.slots.map(slot => {
                 const cleanSlot = { ...slot.toObject() };
-                delete cleanSlot._id; // избегаем конфликтов ObjectId
+                delete cleanSlot._id;
                 return cleanSlot;
-            }) // глубокая копия
+            })
         });
 
         await newSchedule.save();
-
         res.status(201).json({ message: 'Расписание скопировано', schedule: newSchedule });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка при копировании расписания', details: err.message });
     }
 };
 
-// ✅ Удаление расписания
 exports.deleteSchedule = async (req, res) => {
     try {
         const schedule = await Schedule.findById(req.params.id);
         if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
-
         await Schedule.findByIdAndDelete(req.params.id);
         res.json({ message: 'Расписание удалено' });
     } catch (err) {
@@ -139,18 +108,14 @@ exports.deleteSchedule = async (req, res) => {
     }
 };
 
-// 📌 Обновить слот по индексу
 exports.updateSlot = async (req, res) => {
     try {
         const { scheduleId, slotIndex } = req.params;
         const updateData = req.body;
-
         const schedule = await Schedule.findById(scheduleId);
-        if (!schedule || !schedule.slots[slotIndex]) {
-            return res.status(404).json({ error: 'Слот не найден' });
-        }
 
-        // Обновляем слот
+        if (!schedule || !schedule.slots[slotIndex]) return res.status(404).json({ error: 'Слот не найден' });
+
         Object.assign(schedule.slots[slotIndex], updateData);
         await schedule.save();
 
@@ -160,7 +125,6 @@ exports.updateSlot = async (req, res) => {
     }
 };
 
-// ➕ Добавить слот в расписание
 exports.addSlot = async (req, res) => {
     try {
         const schedule = await Schedule.findById(req.params.id);
@@ -175,56 +139,15 @@ exports.addSlot = async (req, res) => {
     }
 };
 
-exports.addSlotToSchedule = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const newSlot = req.body;
-
-        const schedule = await Schedule.findById(id);
-        if (!schedule) return res.status(404).json({ message: 'Расписание не найдено' });
-
-        schedule.slots.push(newSlot);
-        await schedule.save();
-
-        res.json({ message: 'Слот добавлен', schedule });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка при добавлении слота', details: err.message });
-    }
-};
-
-
-
-// 🗑️ Удалить слот по индексу
-exports.deleteSlot = async (req, res) => {
-    try {
-        const { scheduleId, slotIndex } = req.params;
-
-        const schedule = await Schedule.findById(scheduleId);
-        if (!schedule || !schedule.slots[slotIndex]) {
-            return res.status(404).json({ error: 'Слот не найден' });
-        }
-
-        schedule.slots.splice(slotIndex, 1); // Удаление
-        await schedule.save();
-
-        res.json({ message: 'Слот удалён' });
-    } catch (err) {
-        res.status(500).json({ error: 'Ошибка при удалении слота', details: err.message });
-    }
-};
-
-// 🎯 Назначение ученика в слот по индексу
 exports.assignStudentToSlot = async (req, res) => {
     try {
         const { id, index } = req.params;
         const { studentId } = req.body;
-
         const schedule = await Schedule.findById(id);
-        if (!schedule || !schedule.slots[index]) {
-            return res.status(404).json({ error: 'Слот не найден' });
-        }
 
-        schedule.slots[index].studentId = studentId;
+        if (!schedule || !schedule.slots[index]) return res.status(404).json({ error: 'Слот не найден' });
+
+        schedule.slots[index].studentIds.push(studentId);
         await schedule.save();
 
         res.json({ message: 'Ученик назначен в слот', slot: schedule.slots[index] });
@@ -233,3 +156,18 @@ exports.assignStudentToSlot = async (req, res) => {
     }
 };
 
+exports.deleteSlot = async (req, res) => {
+    try {
+        const { scheduleId, slotIndex } = req.params;
+        const schedule = await Schedule.findById(scheduleId);
+
+        if (!schedule || !schedule.slots[slotIndex]) return res.status(404).json({ error: 'Слот не найден' });
+
+        schedule.slots.splice(slotIndex, 1);
+        await schedule.save();
+
+        res.json({ message: 'Слот удалён' });
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка при удалении слота', details: err.message });
+    }
+};

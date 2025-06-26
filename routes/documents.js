@@ -14,7 +14,7 @@ router.post(
 );
 
 router.get(
-    '/:id/documents',
+    '/:id',
     roleMiddleware(['admin', 'teacher']),
     ctrl.getDocumentsByStudent
 );

@@ -1,12 +1,10 @@
 const Attendance = require('../models/Attendance');
-const Student = require('../models/Student');
-const User = require('../models/User');
 
 // ✅ Добавление/обновление посещаемости по слоту
 exports.markAttendance = async (req, res) => {
     try {
         const { scheduleId, slotIndex } = req.params;
-        const { studentId, date, status, comment } = req.body;
+        const { studentId, date, status, comment, lessonType } = req.body;
 
         if (!studentId || !date || !status) {
             return res.status(400).json({ error: 'studentId, date и status обязательны' });
@@ -19,9 +17,12 @@ exports.markAttendance = async (req, res) => {
                 teacher: req.user.id,
                 date: new Date(date),
                 status,
-                comment
+                comment,
+                lessonType,
+                scheduleId,
+                slotIndex
             },
-            { upsert: true, new: true }
+            { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
         res.json({ message: 'Посещение сохранено', attendance });

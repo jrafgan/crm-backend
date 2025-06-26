@@ -8,13 +8,12 @@ const { authMiddleware } = require('../middlewares/auth');
 router.use(authMiddleware);
 
 router.post(
-    '/upload-receipt/:studentId',
+    '/upload/:id',
     authMiddleware,
     upload,
     paymentController.createOrUploadPayment
 );
-router.get('/', paymentController.getPaymentsByStudent); // ?studentId=...
+router.get('/:id', paymentController.getPaymentsByStudent); // ?studentId=...
 router.delete('/:id', paymentController.deletePayment);
-router.get('/export', paymentController.exportPayments); // Excel выгрузка
 
 module.exports = router;

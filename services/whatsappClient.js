@@ -1,14 +1,20 @@
-
+// services/whatsappClient.js
 const {
     default: makeWASocket,
     useMultiFileAuthState,
-    DisconnectReason,          // ← add this
+    DisconnectReason,
 } = require('@whiskeysockets/baileys');
 const P = require('pino');
 const qrcode = require('qrcode');
-let latestQR = null;
 
+let latestQR = null;
 let client;
+let isReady = false; // флаг готовности
+
+function normalizeJid(phone) {
+    const digits = phone.replace(/\D/g, '');
+    return `${digits}@s.whatsapp.net`;
+}
 
 const initWhatsApp = async () => {
     const { state, saveCreds } = await useMultiFileAuthState('./auth');
@@ -18,52 +24,39 @@ const initWhatsApp = async () => {
         logger: P({ level: 'silent' }),
     });
 
-    client.ev.on('connection.update', ({ connection, lastDisconnect , qr}) => {
-
+    client.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
         if (qr) {
             latestQR = qr;
-            //qrcode.generate(qr, { small: true });
-            console.log('📷 QR-код для авторизации:\n');
+            console.log('📷 QR-код для авторизации:');
         }
 
         if (connection === 'close') {
-            const shouldReconnect = lastDisconnect.error?.output?.statusCode
-                !== DisconnectReason.loggedOut;
-            console.log('❌ WhatsApp отключен', lastDisconnect.error,
-                shouldReconnect ? '— переподключаемся' : '');
-            if (shouldReconnect) initWhatsApp();
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('❌ WhatsApp отключен', lastDisconnect?.error, shouldReconnect ? '— переподключаемся' : '');
+            isReady = false;
+            if (shouldReconnect) await initWhatsApp();
         } else if (connection === 'open') {
+            isReady = true;
             console.log('✅ WhatsApp подключен');
-            // ✅ Только теперь безопасно отправлять сообщение
-            sendMessage('+996507391773', '👋 Привет! WhatsApp бот подключен!');
         }
     });
 
     client.ev.on('creds.update', saveCreds);
 };
 
-const sendMessage = async (phone, message) => {
-    if (!client || !client.user?.id) {
-        throw new Error('WhatsApp клиент не готов для отправки сообщений');
+const sendMessage = async (phone, text) => {
+    if (!client || !isReady) {
+        throw new Error('Клиент WhatsApp не готов для отправки сообщений');
     }
-
-    const number = phone.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
-    try {
-        await client.sendMessage(number, {text: message});
-        console.log(`📤 Сообщение отправлено на ${phone}`);
-    } catch (err) {
-        console.error('❌ Ошибка отправки сообщения:', err.message);
-    }
-
+    const jid = normalizeJid(phone);
+    return await client.sendMessage(jid, { text });
 };
-
 
 module.exports = {
     initWhatsApp,
-    sendMessage: async (phone, text) => {
-        await client.sendMessage(phone, { text });
-    },
-    getClient: () => client,   // остаётся как есть
-    getQR:      () => latestQR, // возвращает последнюю строку QR
-    client                        // сам объект сокета, если нужно обращаться напрямую
+    sendMessage,
+    getClient: () => client,
+    getQR: () => latestQR,
+    client,
+    normalizeJid
 };

@@ -6,7 +6,7 @@ const { authMiddleware } = require('../middlewares/auth');
 router.use(authMiddleware);
 
 // Маршрут для отметки посещения
-router.post('/schedule/:scheduleId/slot/:slotIndex', attendanceController.markAttendance);
+router.post('/:scheduleId/slot/:slotIndex', attendanceController.markAttendance);
 
 // Получение отчета по фильтрам
 router.get('/report', attendanceController.getAttendanceReport);

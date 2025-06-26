@@ -25,4 +25,4 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-module.exports = upload.array('files', 10); // экспортируешь массив файлов
+module.exports = upload.array('receipt', 10); // экспортируешь массив файлов

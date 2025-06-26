@@ -1,6 +1,7 @@
 const ExcelJS = require('exceljs');
 const Student = require('../models/Student');
 const User = require('../models/User');
+const Payment = require('../models/Payment');
 
 const sendExcelFile = async (res, rows, columns, filename = 'export.xlsx') => {
     const workbook = new ExcelJS.Workbook();
@@ -89,12 +90,18 @@ exports.exportTeachers = async (req, res) => {
 
         const teachers = await User.find(filter);
 
-        const rows = teachers.map(t => ({
-            "ФИО": t.fullName,
-            "Телефон": t.phone,
-            "Активность": t.isActive ? '✅ Активен' : '⛔ Неактивен',
-            "Дата": t.createdAt.toISOString().split('T')[0]
-        }));
+        const rows = teachers.map(a => {
+            // если нет createdAt, берём время из ObjectId
+            const createdAt = a.createdAt
+                ? new Date(a.createdAt)
+                : a._id.getTimestamp();
+            return {
+                'ФИО': a.fullName,
+                'Телефон': a.phone,
+                'Активность': a.isActive ? '✅ Активен' : '⛔ Неактивен',
+                'Дата': createdAt.toISOString().split('T')[0]
+            };
+        });
 
         const columns = [
             { header: 'ФИО', key: 'ФИО', width: 30 },
@@ -126,12 +133,19 @@ exports.exportAdmins = async (req, res) => {
 
         const admins = await User.find(filter);
 
-        const rows = admins.map(a => ({
-            "ФИО": a.fullName,
-            "Телефон": a.phone,
-            "Активность": a.isActive ? '✅ Активен' : '⛔ Неактивен',
-            "Дата": a.createdAt.toISOString().split('T')[0]
-        }));
+        const rows = admins.map(a => {
+            // если нет createdAt, берём время из ObjectId
+            const createdAt = a.createdAt
+                ? new Date(a.createdAt)
+                : a._id.getTimestamp();
+            return {
+                'ФИО': a.fullName,
+                'Телефон': a.phone,
+                'Активность': a.isActive ? '✅ Активен' : '⛔ Неактивен',
+                'Дата': createdAt.toISOString().split('T')[0]
+            };
+        });
+
 
         const columns = [
             { header: 'ФИО', key: 'ФИО', width: 30 },
@@ -146,4 +160,41 @@ exports.exportAdmins = async (req, res) => {
     }
 };
 
+// Экспорт списка платежей в Excel
+exports.exportPayments = async (req, res) => {
+    try {
+        const payments = await Payment.find()
+            .populate('studentId', 'fullName')
+            .lean();
 
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Payments');
+
+        sheet.columns = [
+            { header: 'ID', key: 'id', width: 24 },
+            { header: 'Студент', key: 'student', width: 30 },
+            { header: 'Сумма', key: 'amount', width: 15 },
+            { header: 'Метод', key: 'method', width: 15 },
+            { header: 'Тип', key: 'paymentType', width: 15 },
+            { header: 'Дата', key: 'date', width: 20 }
+        ];
+
+        payments.forEach(p => {
+            sheet.addRow({
+                id: p._id.toString(),
+                student: p.studentId?.fullName || '',
+                amount: p.amount,
+                method: p.method,
+                paymentType: p.paymentType,
+                date: p.date.toISOString()
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=payments.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

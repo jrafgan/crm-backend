@@ -1,586 +1,296 @@
-openapi: 3.0.1
-info:
-  title: UCreate CRM API
-  version: "1.0.0"
-  description: |
-    Полная документация REST API для CRM-системы UCreate.
-    Включает авторизацию, управление студентами, документами, платежами,
-    расписанием, посещаемостью, заданиями, шаблонами напоминаний и WhatsApp-интеграцией.
-servers:
-  - url: http://localhost:5000
-    description: Локальный сервер
-security:
-  - bearerAuth: []
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-  schemas:
-    UserLogin:
-      type: object
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-      required: [email, password]
-    UserRegister:
-      type: object
-      properties:
-        fullName: { type: string }
-        email: { type: string }
-        password: { type: string }
-        role: { type: string, enum: [admin, teacher, student] }
-      required: [fullName, email, password, role]
-    AuthResponse:
-      type: object
-      properties:
-        token: { type: string }
-        user:
-          type: object
-          properties:
-            id: { type: string }
-            fullName: { type: string }
-            role: { type: string }
-    Student:
-      type: object
-      properties:
-        id: { type: string }
-        fullName: { type: string }
-        phone: { type: string }
-        group: { type: string }
-        packageType: { type: string }
-        paymentStatus: { type: string }
-        learningStatus: { type: string }
-        hasPaid: { type: boolean }
-        teacherId: { type: string }
-        createdBy: { type: string }
-    Document:
-      type: object
-      properties:
-        id: { type: string }
-        fileUrls:
-          type: array
-          items: { type: string }
-        uploadedBy: { type: string }
-        uploadedAt: { type: string, format: date-time }
-    Payment:
-      type: object
-      properties:
-        id: { type: string }
-        studentId: { type: string }
-        amount: { type: number }
-        method: { type: string }
-        paymentType: { type: string }
-        date: { type: string, format: date-time }
-    ScheduleSlot:
-      type: object
-      properties:
-        id: { type: string }
-        day: { type: string }
-        time: { type: string }
-        duration: { type: number }
-        packageType: { type: string }
-        students:
-          type: array
-          items: { type: string }
-        groupName: { type: string }
-        isGroup: { type: boolean }
-        groupLabel: { type: string }
-    AttendanceRecord:
-      type: object
-      properties:
-        id: { type: string }
-        studentId: { type: string }
-        status: { type: string }
-        date: { type: string, format: date }
-    Task:
-      type: object
-      properties:
-        id: { type: string }
-        title: { type: string }
-        description: { type: string }
-        dueDate: { type: string, format: date }
-        status: { type: string }
-        assignedTo: { type: string }
-        createdBy: { type: string }
-        toAllTeachers: { type: boolean }
-    ReminderTemplate:
-      type: object
-      properties:
-        key: { type: string }
-        message: { type: string }
-    WhatsAppLog:
-      type: object
-      properties:
-        id: { type: string }
-        phone: { type: string }
-        message: { type: string }
-        status: { type: string }
-        error: { type: string }
-        createdAt: { type: string, format: date-time }
-  parameters:
-    idParam:
-      name: id
-      in: path
-      required: true
-      schema: { type: string }
-    docIdParam:
-      name: docId
-      in: path
-      required: true
-      schema: { type: string }
-    scheduleIdParam:
-      name: scheduleId
-      in: path
-      required: true
-      schema: { type: string }
-    slotIndexParam:
-      name: slotIndex
-      in: path
-      required: true
-      schema: { type: integer }
-    phoneParam:
-      name: phone
-      in: path
-      required: true
-      schema: { type: string }
-    keyParam:
-      name: key
-      in: path
-      required: true
-      schema: { type: string }
+  schemas: {}
+  securitySchemes: {}
+info:
+  title: CRM Full API Test
+  version: eba5f616-4bc3-4149-8b7b-fa201669add7
+openapi: 3.0.0
 paths:
+  /attendance/123/0:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Mark Attendance
+  /attendance/report:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Attendance Report
   /auth/login:
     post:
-      tags: [Auth]
-      summary: "Логин пользователя"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UserLogin' }
+      description: ''
       responses:
         '200':
-          description: "Токен и информация о пользователе"
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/AuthResponse' }
-              example:
-                token: "jwt_token"
-                user:
-                  id: "abc123"
-                  fullName: "Админ"
-                  role: "admin"
+          description: OK
+      summary: Login User
   /auth/register:
     post:
-      tags: [Auth]
-      summary: "Регистрация пользователя"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UserRegister' }
+      description: ''
       responses:
-        '201':
-          description: "Регистрация успешна"
-          content:
-            application/json:
-              example:
-                message: "Регистрация прошла успешно"
-                user:
-                  id: "abc124"
-                  email: "maksat@example.com"
+        '200':
+          description: OK
+      summary: Register User
+  /documents/123/receipt:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Documents
+  /export/admins:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Export Admins
+  /export/payments:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Export All Receipts
+  /export/students:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Export Students
+  /export/teachers:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Export Teachers
+  /reminders:
+    put:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update Reminder
+  /reminders/morning:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Reminder
+  /schedules:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get All Schedules
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Create Schedule
+  /schedules/123:
+    delete:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Delete Schedule
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Schedule by ID
+    put:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update Schedule
+  /schedules/123/copy:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Copy Schedule
+  /schedules/123/slots:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Add Slot
+  /schedules/123/slots/0:
+    delete:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Delete Slot
+    put:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update Slot
+  /schedules/123/slots/0/assign:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Assign Student to Slot
   /students:
     get:
-      tags: [Students]
-      summary: "Список студентов"
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: group
-          schema: { type: string }
-        - in: query
-          name: teacherId
-          schema: { type: string }
+      description: ''
       responses:
         '200':
-          description: "Успешно"
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Student' }
-              example:
-                - id: "stu1"
-                  fullName: "Иван Иванов"
-                  phone: "+996700123456"
-                  group: "A"
+          description: OK
+      summary: Get All Students
     post:
-      tags: [Students]
-      summary: "Создать студента"
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/Student' }
-      responses:
-        '201':
-          description: "Студент создан"
-          content:
-            application/json:
-              example:
-                id: "stu2"
-                fullName: "Петр Петров"
-  /students/{id}:
-    get:
-      tags: [Students]
-      summary: "Информация о студенте"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/idParam'
+      description: ''
       responses:
         '200':
-          description: "Детали студента"
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Student' }
-              example:
-                id: "stu1"
-                fullName: "Иван Иванов"
-                documents:
-                  - id: "doc1"
-                    fileUrls: ["/uploads/documents/stu1/doc1.jpg"]
-                    uploadedAt: "2025-06-22T08:00:00Z"
-                receipts:
-                  - id: "pay1"
-                    amount: 3000
-                    method: "card"
-                    paymentType: "monthly"
-                    date: "2025-06-21T12:00:00Z"
-    patch:
-      tags: [Students]
-      summary: "Обновить студента"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/idParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { type: object }
-            example:
-              phone: "+996777654321"
-              paymentStatus: "частично"
-      responses:
-        '200':
-          description: "Обновлён студент"
-          content:
-            application/json:
-              example:
-                id: "stu1"
-                phone: "+996777654321"
+          description: OK
+      summary: Create Student
+  /students/123:
     delete:
-      tags: [Students]
-      summary: "Удалить студента"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/idParam'
+      description: ''
       responses:
         '200':
-          description: "Студент удалён"
-          content:
-            application/json:
-              example:
-                message: "Студент удалён"
-  /documents/{id}/upload:
-    post:
-      tags: [Documents]
-      summary: "Загрузить документы"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/idParam'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                documents:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-      responses:
-        '200':
-          description: "Документы загружены"
-          content:
-            application/json:
-              example:
-                id: "doc2"
-                fileUrls: ["/uploads/documents/stu1/doc2.jpg"]
-  /documents/{docId}:
-    delete:
-      tags: [Documents]
-      summary: "Удалить документ"
-      parameters:
-        - $ref: '#/components/parameters/docIdParam'
-      responses:
-        '200':
-          description: "Документ удалён"
-          content:
-            application/json:
-              example:
-                message: "Документ успешно удалён"
-  /payments/upload-receipt/{id}:
-    post:
-      tags: [Payments]
-      summary: "Загрузить чеки оплаты"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/idParam'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                receipts:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-      responses:
-        '201':
-          description: "Чеки загружены"
-          content:
-            application/json:
-              example:
-                documents:
-                  - id: "doc3"
-                    fileUrls: ["/uploads/documents/stu1/receipt1.jpg"]
-  /payments:
+          description: OK
+      summary: Delete Student
     get:
-      tags: [Payments]
-      summary: "Получить все платежи"
-      security:
-        - bearerAuth: []
+      description: ''
       responses:
         '200':
-          description: "Список платежей"
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Payment' }
-              example:
-                - id: "pay1"
-                  studentId: "stu1"
-                  amount: 5000
-                  method: "cash"
-  /schedule:
+          description: OK
+      summary: Get Student by ID
+    put:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update Student
+  /students/123/receipts:
     get:
-      tags: [Schedule]
-      summary: "Получить расписание"
-      security:
-        - bearerAuth: []
+      description: ''
       responses:
         '200':
-          description: "Список слотов расписания"
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/ScheduleSlot' }
-              example:
-                - id: "slot1"
-                  day: "Monday"
-                  time: "10:00"
-                  duration: 2
-                  students: ["stu1"]
-  /schedule/{id}/slot:
+          description: OK
+      summary: Get Receipts
     post:
-      tags: [Schedule]
-      summary: "Добавить слот к расписанию"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/scheduleIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/ScheduleSlot' }
-      responses:
-        '201':
-          description: "Слот создан"
-          content:
-            application/json:
-              example: { message: "Слот добавлен" }
-  /schedule/{scheduleId}/slot/{slotIndex}/assign-student:
-    patch:
-      tags: [Schedule]
-      summary: "Назначить ученика на слот"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/scheduleIdParam'
-        - $ref: '#/components/parameters/slotIndexParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                studentId:
-                  type: string
-            example:
-              studentId: "stu1"
+      description: ''
       responses:
         '200':
-          description: "Ученик назначен"
-          content:
-            application/json:
-              example: { message: "Студент назначен" }
-  /schedule/{id}/copy:
-    post:
-      tags: [Schedule]
-      summary: "Скопировать расписание на следующую неделю"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/scheduleIdParam'
-      responses:
-        '201':
-          description: "Расписание скопировано"
-          content:
-            application/json:
-              example: { message: "Копирование выполнено" }
-  /attendance:
-    get:
-      tags: [Attendance]
-      summary: "Получить все записи посещаемости"
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: "Список посещений"
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/AttendanceRecord' }
-              example:
-                - id: "att1"
-                  studentId: "stu1"
-                  status: "посетил"
-                  date: "2025-06-20"
-  /attendance/schedule/{scheduleId}/slot/{slotIndex}:
-    post:
-      tags: [Attendance]
-      summary: "Отметить посещение"
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/scheduleIdParam'
-        - $ref: '#/components/parameters/slotIndexParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                studentId:
-                  type: string
-                status:
-                  type: string
-            example:
-              studentId: "stu1"
-              status: "посетил"
-      responses:
-        '200':
-          description: "Посещение отмечено"
-          content:
-            application/json:
-              example: { message: "Посещение сохранено" }
+          description: OK
+      summary: Upload Receipt
   /tasks:
     get:
-      tags: [Tasks]
-      summary: "Список задач"
-      security:
-        - bearerAuth: []
+      description: ''
       responses:
         '200':
-          description: "Все задачи"
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Task' }
-              example:
-                - id: "task1"
-                  title: "Домашнее задание"
-                  status: "Не выполнено"
+          description: OK
+      summary: Get All Tasks
     post:
-      tags: [Tasks]
-      summary: "Создать задачу"
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/Task' }
-            example:
-              title: "Проверить дз"
-              description: "Проверить домашнее задание"
-              dueDate: "2025-07-01"
-              assignedTo: "teach1"
-      responses:
-        '201':
-          description: "Задача создана"
-          content:
-            application/json:
-              example:
-                id: "task2"
-  /tasks/{id}:
-    get:
-      tags: [Tasks]
-      summary: "Получить задачу"
-      parameters:
-        - $ref: '#/components/parameters/idParam'
-      security:
-        - bearerAuth: []
+      description: ''
       responses:
         '200':
-          description: "Детали задачи"
-          content:
-            application/json:
-              example:
-                id: "task1"
-                title: "Домашнее задание"
-                status: "Не выполнено"
+          description: OK
+      summary: Create Task
+  /tasks/123:
+    delete:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Delete Task
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Task by ID
     put:
-      tags: [Tasks]
-      summary: "Обновить задачу полностью"
-      parameters:
-        - $ref: '#/components/parameters/idParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update Task
+  /tasks/123/complete:
+    patch:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Mark Task Complete
+  /users:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get All Users
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Create User
+  /users/123:
+    delete:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Delete User
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get User by ID
+    put:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Update User
+  /whatsapp-logs:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Logs
+  /whatsapp-logs/1234567890:
+    get:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Get Logs by Phone
+  /whatsapp/send:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Send Message
+  /whatsapp/send-bulk:
+    post:
+      description: ''
+      responses:
+        '200':
+          description: OK
+      summary: Send Bulk Messages
+security: []
